@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Moon City Con | Play to Win</title>
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="hero">
+
+        <img
+            src="images/mcc-logo26.png"
+            alt="Moon City Con Logo"
+            class="hero-logo"
+        >
+
+        <h1>Play-to-Win</h1>
+
+        <p class="hero-subtitle">
+            You have to play it to win it! Record plays here! 
+        </p>
+
+    </header>
+
+
+    <!-- Search -->
+    <section class="search-section">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search games..."
+            autocomplete="off"
+        >
+
+    </section>
+
+
+    <!-- Game Grid -->
+    <main>
+
+        <section
+            id="gameGrid"
+            class="game-grid"
+        ><div class="placeholder-card">
+        <h2>No Games Loaded</h2>
+            <p>
+                Game cards will appear here once the Play to Win list is connected.
+            </p>
+        </div>
+
+            <article class="game-card">
+    <div class="game-image-wrap">
+        <img
+            src="${thumbnailUrl}"
+            alt="${game.Title} box cover"
+            class="game-image"
+        >
+    </div>
+
+    <div class="game-card-content">
+        <h2 class="game-title">The Druids of Edora</h2>
+        <p class="game-publisher">Alea</p>
+
+        <div class="game-actions">
+            <button class="game-button">Record Play</button>
+            <a
+                class="bgg-link"
+                href="https://boardgamegeek.com/"
+                target="440007"
+                rel="noopener noreferrer"
+            >
+                BGG
+            </a>
+        </div>
+    </div>
+</article>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- Footer -->
+    <footer>
+
+        <p>
+            Moon City Con 2026 • Play to Win
+        </p>
+
+    </footer>
+
+    <!-- Record Play Modal -->
+<div id="recordPlayModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeRecordPlayModal()"></div>
+
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeRecordPlayModal()">×</button>
+
+        <p class="modal-kicker">Play-to-Win Entry</p>
+        <h2 id="modalGameTitle">Game Title</h2>
+        <p id="modalGamePublisher" class="modal-subtitle">Publisher</p>
+
+        <form id="recordPlayForm" class="record-play-form">
+            <div id="playerRows" class="player-rows">
+                <!-- Player rows inserted by app.js -->
+            </div>
+
+            <button type="button" id="addPlayerButton" class="secondary-button">
+                + Add Player
+            </button>
+
+            <button type="submit" class="game-button">
+                Submit Play
+            </button>
+        </form>
+    </div>
+</div>
+
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
