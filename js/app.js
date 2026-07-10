@@ -3,31 +3,59 @@
 //------------------------------------
 
 let allGames = [];
+let allPlayers = [];
+let playerLookup = new Map();
 
-// Temporary test data
-const sampleGames = [
-    {
-        GameId: "PTW001",
-        Title: "The Druids of Edora",
-        Publisher: "Alea",
-        BGGId: "440007",
-        ImageUrl: "https://cf.geekdo-images.com/placeholder.jpg"
-    }
-];
 
 //------------------------------------
 // Startup
 //------------------------------------
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async() => {
     setupSearch();
 
-    // For now, use sample data.
-    // Later this will become: loadGames();
-    allGames = sampleGames;
-    renderGames(allGames);
-    document.getElementById("addPlayerButton").addEventListener("click", addPlayerRow);
+    
+    await loadGames();
+    await loadPlayers();
+
+
+    document
+        .getElementById("addPlayerButton")
+        .addEventListener("click", addPlayerRow);
+
+    document
+        .getElementById("recordPlayForm")
+        .addEventListener("submit", handleRecordPlaySubmit);
+
 });
+
+//------------------------------------
+// Load data
+//------------------------------------
+
+async function loadGames() {
+    const games = await getGames();
+
+    allGames = Array.isArray(games) ? games : [];
+
+    renderGames(allGames);
+}
+
+async function loadPlayers() {
+
+    const players = await getPlayers();
+
+    allPlayers = Array.isArray(players) ? players : [];
+
+    playerLookup.clear();
+
+    allPlayers.forEach(player => {
+        playerLookup.set(String(player.BadgeNumber), player);
+    });
+
+    console.log(`${allPlayers.length} players loaded.`);
+}
+
 
 //------------------------------------
 // Search
@@ -78,7 +106,10 @@ function createGameCard(game) {
     card.className = "game-card";
 
     const bggUrl = `https://boardgamegeek.com/boardgame/${game.BGGId}`;
-    const thumbnailUrl = game.ThumbnailUrl || "images/game-placeholder.png";
+    const thumbnailUrl = 
+        game.ThumbnailUrl ||
+        game.ImageUrl ||
+        "images/game-placeholder.png";
 
     card.innerHTML = `
         <a
@@ -143,7 +174,17 @@ function openRecordPlayModal(game) {
 }
 
 function closeRecordPlayModal() {
-    document.getElementById("recordPlayModal").classList.add("hidden");
+    const modal = document.getElementById("recordPlayModal");
+    const form = document.getElementById("recordPlayForm");
+    const playerRows = document.getElementById("playerRows");
+
+    modal.classList.add("hidden");
+
+    form.reset();
+    playerRows.innerHTML = "";
+
+    activeGame = null;
+    playerRowCount = 0;
 }
 
 function addPlayerRow() {
@@ -166,28 +207,30 @@ function addPlayerRow() {
         </div>
 
         <div class="form-grid">
-            <div class="form-field">
-                <label>Badge #</label>
-                <input type="text" name="badgeNumber" required>
-            </div>
 
-            <div class="form-field">
-                <label>First Name</label>
-                <input type="text" name="firstName" required>
-            </div>
+            <div class="form-field full-width player-search-field">
+                <label>Player</label>
 
-            <div class="form-field">
-                <label>Last Name</label>
-                <input type="text" name="lastName" required>
-            </div>
+                <input
+                    type="text"
+                    name="playerSearch"
+                    class="player-search-input"
+                    placeholder="Start typing badge number or name..."
+                    autocomplete="off"
+                    required
+                >
 
-            <div class="form-field">
-                <label>Email</label>
-                <input type="email" name="email" required>
+                <input
+                    type="hidden"
+                    name="badgeNumber"
+                >
+
+                <div class="player-search-results hidden"></div>
             </div>
 
             <div class="form-field full-width">
                 <label>How much would you like to win this game?</label>
+
                 <select name="rank" required>
                     <option value="">Select ranking...</option>
                     <option value="5">5 — Very much want to win</option>
@@ -197,16 +240,218 @@ function addPlayerRow() {
                     <option value="1">1 — Do not want to win this game</option>
                 </select>
             </div>
+
         </div>
     `;
+
+    setupPlayerAutocomplete(row);
 
     const removeButton = row.querySelector(".remove-player-button");
 
     if (removeButton) {
         removeButton.addEventListener("click", () => {
             row.remove();
+            renumberPlayerRows();
         });
     }
 
     playerRows.appendChild(row);
+
+}
+
+//------------------------------------
+// Player Autocomplete
+//------------------------------------
+
+function setupPlayerAutocomplete(row) {
+    const searchInput = row.querySelector('[name="playerSearch"]');
+    const badgeInput = row.querySelector('[name="badgeNumber"]');
+    const resultsPanel = row.querySelector(".player-search-results");
+
+    searchInput.addEventListener("input", () => {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+
+        // Any manual typing invalidates the previous selection.
+        badgeInput.value = "";
+
+        if (!searchTerm) {
+            hidePlayerResults(resultsPanel);
+            return;
+        }
+
+        const matchingPlayers = allPlayers
+            .filter(player => {
+                const badgeNumber = String(player.BadgeNumber).toLowerCase();
+                const firstName = String(player.FirstName).toLowerCase();
+                const lastName = String(player.LastName).toLowerCase();
+                const fullName = `${firstName} ${lastName}`;
+
+                return (
+                    badgeNumber.includes(searchTerm) ||
+                    firstName.includes(searchTerm) ||
+                    lastName.includes(searchTerm) ||
+                    fullName.includes(searchTerm)
+                );
+            })
+            .slice(0, 10);
+
+        renderPlayerResults(
+            matchingPlayers,
+            searchInput,
+            badgeInput,
+            resultsPanel
+        );
+    });
+
+    searchInput.addEventListener("focus", () => {
+        if (searchInput.value.trim() && !badgeInput.value) {
+            searchInput.dispatchEvent(new Event("input"));
+        }
+    });
+
+    searchInput.addEventListener("blur", () => {
+        window.setTimeout(() => {
+            hidePlayerResults(resultsPanel);
+        }, 150);
+    });
+}
+
+
+function renderPlayerResults(
+    players,
+    searchInput,
+    badgeInput,
+    resultsPanel
+) {
+    resultsPanel.innerHTML = "";
+
+    if (!players.length) {
+        resultsPanel.innerHTML = `
+            <div class="player-search-empty">
+                No matching players found.
+            </div>
+        `;
+
+        resultsPanel.classList.remove("hidden");
+        return;
+    }
+
+    players.forEach(player => {
+        const option = document.createElement("button");
+
+        option.type = "button";
+        option.className = "player-search-option";
+
+        const displayName =
+            `${player.BadgeNumber} — ${player.FirstName} ${player.LastName}`;
+
+        option.textContent = displayName;
+
+        option.addEventListener("mousedown", event => {
+            event.preventDefault();
+
+            searchInput.value = displayName;
+            badgeInput.value = String(player.BadgeNumber);
+
+            hidePlayerResults(resultsPanel);
+        });
+
+        resultsPanel.appendChild(option);
+    });
+
+    resultsPanel.classList.remove("hidden");
+}
+
+
+function hidePlayerResults(resultsPanel) {
+    resultsPanel.classList.add("hidden");
+    resultsPanel.innerHTML = "";
+}
+
+function renumberPlayerRows() {
+    const rows = document.querySelectorAll("#playerRows .player-row");
+
+    rows.forEach((row, index) => {
+        const title = row.querySelector(".player-row-title");
+
+        if (title) {
+            title.textContent = `Player ${index + 1}`;
+        }
+    });
+
+    playerRowCount = rows.length;
+}
+
+
+//------------------------------------
+// Submit Recorded Play
+//------------------------------------
+
+async function handleRecordPlaySubmit(event) {
+    event.preventDefault();
+
+    if (!activeGame) {
+        alert("No game is currently selected.");
+        return;
+    }
+
+    const form = event.currentTarget;
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const playerRows = form.querySelectorAll(".player-row");
+
+    const players = Array.from(playerRows).map(row => ({
+    badgeNumber: row
+        .querySelector('[name="badgeNumber"]')
+        .value
+        .trim(),
+
+    rank: Number(
+        row.querySelector('[name="rank"]').value
+    )
+}));
+
+    const playSubmission = {
+        gameId: activeGame.GameId,
+        players
+    };
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+
+    try {
+        console.log("Play submission:", playSubmission);
+
+
+        const result = await submitPlay(playSubmission);
+
+        if (!result.success) {
+            throw new Error(result.message || "Unable to submit play.");
+        }
+        
+
+        alert(
+            `Play recorded for ${activeGame.Title} with ${players.length} player${
+                players.length === 1 ? "" : "s"
+            }.`
+        );
+
+        closeRecordPlayModal();
+    } catch (error) {
+        console.error("Play submissions failed:", error);
+
+        alert(
+            error.message ||
+            "Something went wrong while recording the play."
+        );
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit Play";
+    }
 }

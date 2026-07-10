@@ -385,6 +385,61 @@ Record Play Form
     background: #eadcde;
 }
 
+/*--------------------------------------------------------------
+Player Autocomplete
+--------------------------------------------------------------*/
+
+.player-search-field {
+    position: relative;
+}
+
+.player-search-results {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    z-index: 20;
+
+    max-height: 240px;
+    overflow-y: auto;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.player-search-option {
+    display: block;
+    width: 100%;
+
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+
+    padding: 0.8rem 0.9rem;
+    text-align: left;
+    font: inherit;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.player-search-option:last-child {
+    border-bottom: none;
+}
+
+.player-search-option:hover,
+.player-search-option:focus {
+    background: #f4eeee;
+    outline: none;
+}
+
+.player-search-empty {
+    padding: 0.8rem 0.9rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
 @media (max-width: 600px) {
     .modal-content {
         padding: 1.5rem;
