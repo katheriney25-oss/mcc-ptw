@@ -2,6 +2,8 @@
 // State
 //------------------------------------
 
+const PLAYER_PROFILE_KEY = "mccPTWPlayerBadge2026";
+
 let allGames = [];
 let allPlayers = [];
 let playerLookup = new Map();
@@ -14,9 +16,11 @@ let playerLookup = new Map();
 document.addEventListener("DOMContentLoaded", async() => {
     setupSearch();
 
-    
     await loadGames();
     await loadPlayers();
+
+    setupPlayerProfile();
+    loadSavedPlayerProfile();
 
 
     document
@@ -50,12 +54,112 @@ async function loadPlayers() {
     playerLookup.clear();
 
     allPlayers.forEach(player => {
-        playerLookup.set(String(player.BadgeNumber), player);
+        playerLookup.set(
+            String(player.BadgeNumber).trim(), 
+            player
+        );
     });
 
     console.log(`${allPlayers.length} players loaded.`);
 }
 
+//------------------------------------
+// Player Profile
+//------------------------------------
+
+function setupPlayerProfile() {
+    const profileSection =
+        document.getElementById("playerProfileSection");
+
+    setupPlayerAutocomplete(
+        profileSection,
+        player => {
+            savePlayerProfile(player.BadgeNumber);
+            displayPlayerProfile(player);
+        }
+    );
+}
+
+
+
+function findPlayerByBadge(badgeNumber) {
+    return playerLookup.get(String(badgeNumber).trim());
+}
+
+function savePlayerProfile(badgeNumber) {
+    localStorage.setItem(PLAYER_PROFILE_KEY, String(badgeNumber).trim());
+}
+
+function loadSavedPlayerProfile() {
+    const savedBadgeNumber =
+        localStorage.getItem(PLAYER_PROFILE_KEY);
+
+    if (!savedBadgeNumber) return;
+
+    const player = findPlayerByBadge(savedBadgeNumber);
+
+    if (!player) {
+        localStorage.removeItem(PLAYER_PROFILE_KEY);
+        return;
+    }
+
+    const profileSection =
+        document.getElementById("playerProfileSection");
+
+    const searchInput =
+        profileSection.querySelector('[name="playerSearch"]');
+
+    const badgeInput =
+        profileSection.querySelector('[name="badgeNumber"]');
+
+    searchInput.value =
+        `${player.BadgeNumber} — ${player.FirstName} ${player.LastName}`;
+
+    badgeInput.value = String(player.BadgeNumber);
+
+    displayPlayerProfile(player);
+}
+function displayPlayerProfile(player) {
+    const profileDisplay = 
+        document.getElementById("playerProfile");
+
+    const totalPlays = Number(player.TotalPlays) || 0;
+
+    const playLabel = 
+        totalPlays === 1
+            ? "Play Entry"
+            : "Play Entries";
+
+    profileDisplay.innerHTML = `
+        <div class="player-profile-success">
+            <strong>
+                Welcome, ${player.FirstName} ${player.LastName}!
+            </strong>
+
+            <span>
+                🎲 ${totalPlays} ${playLabel}
+            </span>
+
+        </div>
+    `;
+}
+
+function displayPlayerProfileError(message) {
+    const profileDisplay = 
+        document.getElementById("playerProfile");
+
+    profileDisplay.innerHTML = `
+        <div class="player-profile-error">
+            ${message}
+        </div>
+    `;
+}
+
+function clearPlayerProfile() {
+    localStorage.removeItem(PLAYER_PROFILE_KEY);
+
+    document.getElementById("playerProfile").innerHTML = "";
+}
 
 //------------------------------------
 // Search
@@ -111,6 +215,13 @@ function createGameCard(game) {
         game.ImageUrl ||
         "images/game-placeholder.png";
 
+    const totalPlays = Number(game.TotalPlays) || 0;
+
+    const playEntryLabel = 
+        totalPlays === 1
+            ? "Play Entry"
+            : "Play Entries";
+
     card.innerHTML = `
         <a
             class="game-image-link"
@@ -132,6 +243,12 @@ function createGameCard(game) {
         <div class="game-card-content">
             <h2 class="game-title">${game.Title}</h2>
             <p class="game-publisher">${game.Publisher}</p>
+
+            <div class="game-play-count">
+                <span aria-hidden="true">🎲</span>
+                ${totalPlays} ${playEntryLabel}
+            </div>
+
 
             <button
                 class="game-button"
@@ -263,16 +380,29 @@ function addPlayerRow() {
 // Player Autocomplete
 //------------------------------------
 
-function setupPlayerAutocomplete(row) {
-    const searchInput = row.querySelector('[name="playerSearch"]');
-    const badgeInput = row.querySelector('[name="badgeNumber"]');
-    const resultsPanel = row.querySelector(".player-search-results");
+function setupPlayerAutocomplete(
+    row,
+    onPlayerSelected = null
+) {
+    const searchInput =
+        row.querySelector('[name="playerSearch"]');
+
+    const badgeInput =
+        row.querySelector('[name="badgeNumber"]');
+
+    const resultsPanel =
+        row.querySelector(".player-search-results");
 
     searchInput.addEventListener("input", () => {
-        const searchTerm = searchInput.value.toLowerCase().trim();
+        const searchTerm =
+            searchInput.value.toLowerCase().trim();
 
-        // Any manual typing invalidates the previous selection.
+        // Manual typing invalidates the previous selection.
         badgeInput.value = "";
+
+        if (onPlayerSelected) {
+            clearPlayerProfile();
+        }
 
         if (!searchTerm) {
             hidePlayerResults(resultsPanel);
@@ -281,10 +411,17 @@ function setupPlayerAutocomplete(row) {
 
         const matchingPlayers = allPlayers
             .filter(player => {
-                const badgeNumber = String(player.BadgeNumber).toLowerCase();
-                const firstName = String(player.FirstName).toLowerCase();
-                const lastName = String(player.LastName).toLowerCase();
-                const fullName = `${firstName} ${lastName}`;
+                const badgeNumber =
+                    String(player.BadgeNumber).toLowerCase();
+
+                const firstName =
+                    String(player.FirstName).toLowerCase();
+
+                const lastName =
+                    String(player.LastName).toLowerCase();
+
+                const fullName =
+                    `${firstName} ${lastName}`;
 
                 return (
                     badgeNumber.includes(searchTerm) ||
@@ -299,13 +436,19 @@ function setupPlayerAutocomplete(row) {
             matchingPlayers,
             searchInput,
             badgeInput,
-            resultsPanel
+            resultsPanel,
+            onPlayerSelected
         );
     });
 
     searchInput.addEventListener("focus", () => {
-        if (searchInput.value.trim() && !badgeInput.value) {
-            searchInput.dispatchEvent(new Event("input"));
+        if (
+            searchInput.value.trim() &&
+            !badgeInput.value
+        ) {
+            searchInput.dispatchEvent(
+                new Event("input")
+            );
         }
     });
 
@@ -316,12 +459,12 @@ function setupPlayerAutocomplete(row) {
     });
 }
 
-
 function renderPlayerResults(
     players,
     searchInput,
     badgeInput,
-    resultsPanel
+    resultsPanel,
+    onPlayerSelected = null
 ) {
     resultsPanel.innerHTML = "";
 
@@ -354,6 +497,10 @@ function renderPlayerResults(
             badgeInput.value = String(player.BadgeNumber);
 
             hidePlayerResults(resultsPanel);
+
+            if (typeof onPlayerSelected === "function") {
+                onPlayerSelected(player);
+            }
         });
 
         resultsPanel.appendChild(option);
@@ -443,6 +590,11 @@ async function handleRecordPlaySubmit(event) {
         );
 
         closeRecordPlayModal();
+
+        await loadGames();
+        await loadPlayers();
+        loadSavedPlayerProfile();
+
     } catch (error) {
         console.error("Play submissions failed:", error);
 

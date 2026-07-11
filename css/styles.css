@@ -64,6 +64,49 @@ Hero
 }
 
 /*--------------------------------------------------------------
+Player Profile Section
+--------------------------------------------------------------*/
+
+.player-profile-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: white;
+    border-radius: 0.8rem;
+    box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.08);
+}
+
+.player-profile-entry {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.player-profile-entry label {
+    font-weight: 750;
+}
+
+.player-profile-entry input {
+    width: 100%;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #c9c9c9;
+    border-radius: 0.5rem;
+    font: inherit;
+}
+
+.player-profile-success {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-top: 0.85rem;
+}
+
+.player-profile-error {
+    margin-top: 0.75rem;
+    font-weight: 700;
+    color: #9c2727;
+}
+
+/*--------------------------------------------------------------
 Search
 --------------------------------------------------------------*/
 
@@ -438,6 +481,16 @@ Player Autocomplete
     padding: 0.8rem 0.9rem;
     color: var(--muted);
     font-size: 0.9rem;
+}
+
+.game-play-count {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.75rem 0 1rem;
+    font-size: 0.92rem;
+    font-weight: 750;
+    color: var(--muted);
 }
 
 @media (max-width: 600px) {

@@ -28,6 +28,37 @@
 
     </header>
 
+    <section
+        id="playerProfileSection" 
+        class="player-profile-section">
+    <div class="player-profile-entry player-search-field">
+        <label for="profilePlayerSearch">
+            Find Your Player Profile
+        </label>
+
+        <input
+            type="text"
+            id="profilePlayerSearch"
+            name="playerSearch"
+            class="player-search-input"
+            placeholder="Start typing badge number or name..."
+            autocomplete="off"
+        >
+
+        <input
+            type="hidden"
+            name="badgeNumber"
+        >
+
+        <div class="player-search-results hidden"></div>
+    </div>
+
+    <div
+        id="playerProfile"
+        aria-live="polite"
+    ></div>
+    </section>
+
 
     <!-- Search -->
     <section class="search-section">
