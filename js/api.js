@@ -80,6 +80,36 @@ async function getPlayers() {
 
 }
 
+async function getPlayerPlays(badgeNumber) {
+    const response = await fetch(CONFIG.apiUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "text/plain;charset=UTF-8"
+        },
+        body: JSON.stringify({
+            action: "getPlayerPlays",
+            badgeNumber: badgeNumber
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    console.log("getPlayerPlays response:", result);
+
+    if (!result.success) {
+        throw new Error(
+            result.message ||
+            "Unable to load player play history."
+        );
+    }
+
+    return result;
+}
+
 async function submitPlay(playSubmission) {
   try {
     const response = await fetch(CONFIG.apiUrl, {

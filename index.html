@@ -127,6 +127,48 @@
     </div>
 </div>
 
+<div
+    id="playerPlaysModal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="playerPlaysModalTitle"
+>
+    <div class="modal-content player-plays-modal-content">
+
+        <button
+            type="button"
+            class="modal-close"
+            id="closePlayerPlaysModalButton"
+            aria-label="Close player play history"
+        >
+            &times;
+        </button>
+
+        <p class="modal-category">
+            Player Profile
+        </p>
+
+        <h2 id="playerPlaysModalTitle">
+            Play History
+        </h2>
+
+        <div id="playerPlaysModalBody">
+            <p>Loading play history...</p>
+        </div>
+
+        <div class="modal-actions">
+            <button
+                type="button"
+                id="closePlayerPlaysOkButton"
+                class="game-button"
+            >
+                OK
+            </button>
+        </div>
+
+    </div>
+</div>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>

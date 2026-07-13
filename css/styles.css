@@ -3,9 +3,9 @@ Global
 --------------------------------------------------------------*/
 
 :root {
-    --primary: #cb5961;
-    --primary-dark: #b04b53;
-    --primary-light: #df858c;
+    --primary: #515050;
+    --primary-dark: #353434;
+    --primary-light: #b5b4b4;
     --gold: #d7a446;
     --cream: #f8f4f2;
     --white: #ffffff;
@@ -36,8 +36,8 @@ Hero
 .hero {
     background: linear-gradient(
         180deg,
-        #d16a71 0%,
-        #cb5961 100%
+        #b5b4b4 0%,
+        #353434 100%
     );
 
     color: white;
@@ -317,6 +317,16 @@ Modal
     color: var(--muted);
 }
 
+.modal-close:hover {
+    color: var(--primary);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.25rem;
+}
+
 .modal-kicker {
     margin: 0 0 .35rem;
     color: var(--primary);
@@ -500,6 +510,162 @@ Player Autocomplete
 
     .form-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+.player-play-count-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    padding: 0.35rem 0.55rem;
+
+    border: 0;
+    border-radius: 0.45rem;
+
+    background: transparent;
+    color: var(--ink);
+
+    font: inherit;
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.player-play-count-button:hover {
+    background: rgba(196, 83, 94, 0.1);
+    color: var(--primary);
+}
+
+.player-play-count-button:focus-visible {
+    outline: 3px solid rgba(196, 83, 94, 0.3);
+    outline-offset: 2px;
+}
+
+.player-play-count-button:active {
+    transform: translateY(1px);
+}
+
+.player-plays-modal-panel {
+    width: min(92vw, 620px);
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.player-plays-modal-content {
+    position: relative;
+    width: min(92vw, 620px);
+    max-height: 85vh;
+    overflow-y auto;
+}
+
+.player-plays-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+
+    margin: 1.25rem 0;
+}
+
+.player-plays-summary > div {
+    display: grid;
+    gap: 0.25rem;
+
+    padding: 1rem;
+
+    border: 1px solid rgba(0, 0, 0, 0.09);
+    border-radius: 0.75rem;
+
+    background: rgba(196, 83, 94, 0.06);
+}
+
+.player-plays-summary span {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.player-plays-summary strong {
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.player-plays-list {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.player-play-history-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    padding: 0.9rem 1rem;
+
+    border: 1px solid rgba(0, 0, 0, 0.09);
+    border-radius: 0.7rem;
+
+    background: #fff;
+}
+
+.player-play-history-game {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.player-play-history-game strong {
+    color: var(--ink);
+}
+
+.player-play-history-game span {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.player-play-history-count {
+    display: grid;
+    flex: 0 0 auto;
+
+    min-width: 62px;
+
+    text-align: center;
+}
+
+.player-play-history-count strong {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.player-play-history-count span {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.player-plays-loading,
+.player-plays-message {
+    padding: 2rem 1rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+.player-plays-error {
+    color: #a3323c;
+}
+
+@media (max-width: 520px) {
+    .player-plays-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .player-play-history-row {
+        align-items: flex-start;
     }
 }
 /*--------------------------------------------------------------

@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", async() => {
     await loadGames();
     await loadPlayers();
 
+    wirePlayerPlaysModal();
+
     setupPlayerProfile();
     loadSavedPlayerProfile();
 
@@ -30,6 +32,12 @@ document.addEventListener("DOMContentLoaded", async() => {
     document
         .getElementById("recordPlayForm")
         .addEventListener("submit", handleRecordPlaySubmit);
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closePlayerPlaysModal();
+        }
+    })
 
 });
 
@@ -61,6 +69,15 @@ async function loadPlayers() {
     });
 
     console.log(`${allPlayers.length} players loaded.`);
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 //------------------------------------
@@ -136,13 +153,31 @@ function displayPlayerProfile(player) {
                 Welcome, ${player.FirstName} ${player.LastName}!
             </strong>
 
-            <span>
+            <button
+                type="button"
+                class="player-play-count-button"
+            >
                 🎲 ${totalPlays} ${playLabel}
-            </span>
+            </button>
 
         </div>
     `;
-}
+
+    const playCountButton = profileDisplay.querySelector(
+    ".player-play-count-button"
+    );
+
+    if (!playCountButton) return;
+
+    playCountButton.addEventListener("click", () => {
+        openPlayerPlaysModal(
+            player.BadgeNumber,
+            `${player.FirstName} ${player.LastName}`
+            );
+        });
+    }
+
+
 
 function displayPlayerProfileError(message) {
     const profileDisplay = 
@@ -160,6 +195,69 @@ function clearPlayerProfile() {
 
     document.getElementById("playerProfile").innerHTML = "";
 }
+
+async function openPlayerPlaysModal(badgeNumber, playerName) {
+    const modal = document.getElementById("playerPlaysModal");
+    const modalTitle = document.getElementById(
+        "playerPlaysModalTitle"
+    );
+    const modalBody = document.getElementById(
+        "playerPlaysModalBody"
+    );
+
+    if (!modal || !modalTitle || !modalBody) return;
+
+    modalTitle.textContent = `${playerName} — Play History`;
+
+    modalBody.innerHTML = `
+        <div class="player-plays-loading">
+            Loading play history...
+        </div>
+    `;
+
+    modal.classList.remove("hidden");
+    document.body.classList.add("modal-open");
+
+    try {
+        const result = await getPlayerPlays(badgeNumber);
+
+        renderPlayerPlays(result.games, result.totalPlays);
+    } catch (error) {
+        console.error("Unable to load player plays:", error);
+
+        modalBody.innerHTML = `
+            <div class="player-plays-message player-plays-error">
+                We couldn't load this player's play history.
+                Please try again.
+            </div>
+        `;
+    }
+}
+
+function wirePlayerPlaysModal() {
+    const closeButton = document.getElementById(
+        "closePlayerPlaysModalButton"
+    );
+
+    const okButton = document.getElementById(
+        "closePlayerPlaysOkButton"
+    );
+
+    if (closeButton) {
+        closeButton.addEventListener(
+            "click",
+            closePlayerPlaysModal
+        );
+    }
+
+    if (okButton) {
+        okButton.addEventListener(
+            "click",
+            closePlayerPlaysModal
+        );
+    }
+}
+
 
 //------------------------------------
 // Search
@@ -268,6 +366,72 @@ function createGameCard(game) {
     return card;
 }
 
+function renderPlayerPlays(games, totalPlays) {
+    const modalBody = document.getElementById(
+        "playerPlaysModalBody"
+    );
+
+    if (!modalBody) return;
+
+    if (!games || games.length === 0) {
+        modalBody.innerHTML = `
+            <div class="player-plays-message">
+                No play entries have been recorded yet.
+            </div>
+        `;
+
+        return;
+    }
+
+    const uniqueGameCount = games.length;
+
+    modalBody.innerHTML = `
+        <div class="player-plays-summary">
+            <div>
+                <span>Total Play Entries</span>
+                <strong>${totalPlays}</strong>
+            </div>
+
+            <div>
+                <span>Different Games</span>
+                <strong>${uniqueGameCount}</strong>
+            </div>
+        </div>
+
+        <div class="player-plays-list">
+            ${games.map(game => `
+                <div class="player-play-history-row">
+                    <div class="player-play-history-game">
+                        <strong>${escapeHtml(game.title)}</strong>
+
+                        ${
+                            game.publisher
+                                ? `<span>${escapeHtml(game.publisher)}</span>`
+                                : ""
+                        }
+                    </div>
+
+                    <div class="player-play-history-count">
+                        <strong>${game.playCount}</strong>
+                        <span>
+                            ${game.playCount === 1 ? "play" : "plays"}
+                        </span>
+                    </div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+function closePlayerPlaysModal() {
+    const modal = document.getElementById("playerPlaysModal");
+
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+    document.body.classList.remove("modal-open");
+}
+
 //------------------------------------
 // Record Play Placeholder
 //------------------------------------
@@ -362,6 +526,23 @@ function addPlayerRow() {
     `;
 
     setupPlayerAutocomplete(row);
+
+    // Automatically populate Player 1 with the saved profile.
+if (playerRowCount === 1) {
+    const savedBadgeNumber = localStorage.getItem(PLAYER_PROFILE_KEY);
+
+    if (savedBadgeNumber) {
+        const player = findPlayerByBadge(savedBadgeNumber);
+
+        if (player) {
+            row.querySelector('[name="playerSearch"]').value =
+                `${player.BadgeNumber} — ${player.FirstName} ${player.LastName}`;
+
+            row.querySelector('[name="badgeNumber"]').value =
+                player.BadgeNumber;
+        }
+    }
+}
 
     const removeButton = row.querySelector(".remove-player-button");
 
